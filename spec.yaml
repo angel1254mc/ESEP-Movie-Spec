@@ -1,0 +1,201 @@
+openapi: 3.0.1
+info:
+  title: Movie Ticket Booking API
+  version: 1.0.0
+  description: Movie theatre API spec (specifically, the seat listing and reservation/booking portion of the API)
+
+paths:
+  /movie/seating:
+    get:
+      summary: Get available seats for specific showtime
+      description: Retrieves a list of seats for a specific show time.
+      parameters:
+        - name: showtimeID
+          in: query
+          description: ID of the movie showtime object we are finding seats for.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with seat list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    seatId:
+                      type: string
+                      description: The number of the seat in the row.
+                    seatRow:
+                      type: string
+                      description: The letter of the seat row
+                    showtimeID:
+                      type: string
+                      description: ID of show time the seat corresponds to
+                    isReserved:
+                      type: boolean
+                      description: Denotes whether or not the seat is being reserved (checkout process)).
+                    isBooked:
+                      type: boolean
+                      description: Denotes whether or not the seat has already been booked.
+        '404':
+          description: Unsuccessful due to non-existent showtimeID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+        '405':
+          description: Unsuccessful due to invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+      tags:
+        - Movie Seating
+        
+    post:
+      summary: Reserve a seat or many seats
+      description: Used to reserve a seat or several seats for a particular showtime. This is different from booking, as reservation is just for holding seats before payment is confirmed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                showtimeID:
+                  type: string
+                  description: The unique identifier for the selected showtime.
+                seats:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      seatId:
+                        type: string
+                        description: The number of the seat in the row.
+              required:
+                - showtimeID
+                - seats
+      tags:
+        - Movie Seating
+      responses:
+        '200':
+          description: Successful in reserving seat, returns seats that were reserved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationID:
+                    type: string
+                    description: Unique ID corresponding to the reservation and set of seats reserved.
+                  showtimeID:
+                    type: string
+                    description: Unique ID for Showtime for which seats were reserved
+                  seats:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        seatId:
+                          type: string
+                          description: The number of the seat in the row.
+                        seatRow:
+                          type: string
+                          description: The letter of the seat row
+                        showtimeID:
+                          type: string
+                          description: ID of show time the seat corresponds to
+                        isReserved:
+                          type: boolean
+                          description: Denotes whether or not the seat is being reserved (checkout process)).
+                        isBooked:
+                          type: boolean
+                          description: Denotes whether or not the seat has already been booked.
+        '405':
+          description: Unsuccessful due to invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+        '404':
+          description: Unsuccessful due to non-existent showtimeID or seats.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+    delete:
+      summary: Unreserve a seat or many seats
+      description: Internal endpoint used to "unreserve" seats that were reserved in a checkout session that never finished/is no longer active. Takes a reservationID and deletes it thus unreserving those seats.
+      
+      responses:
+        '200':
+          description: Successfully deleted reservation and made seats available. Returns the deleted reservationID.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationID:
+                    type: string
+                    description: Deleted reservationID
+        '404':
+          description: showtimeID does not exist and/or seats are not reserved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+        '405':
+          description: missing showtimeID or seats array
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Error code for response
+                  message:
+                    type: string
+                    description: Custom error message
+      tags:
+        - Movie Seating
